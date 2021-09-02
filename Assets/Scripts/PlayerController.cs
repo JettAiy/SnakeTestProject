@@ -82,7 +82,10 @@ public class PlayerController : MonoBehaviour
         if (snakeSegments.Count == 0 || isNoControl) return;
 
         if (Input.GetKeyDown(KeyCode.Space))
-            AddSegment();
+            StartCoroutine(AddSegment(1));
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+            Application.Quit();
 
         RotateSnake();
         MoveSnake();
@@ -197,14 +200,18 @@ public class PlayerController : MonoBehaviour
                 return;
             foodDetectors.Add(detector); //add food to respawn system
 
-            //add score
+            //add score       
             score += detector.points;
             detector.time = Time.time; //add food time to respawn
             OnScoreChange?.Invoke(score);
 
-            //add new segment
-            AddSegment();
-
+            //add new segment depending on points
+            float timeToWait = 0.3f;
+            for (int i = 0; i < detector.points; i++)
+            {
+                StartCoroutine(AddSegment(i*timeToWait));
+            }
+            
             //eat animation
             snakeSegments[0].GetComponent<LeanAnimation>().ScaleAnimationOneTime();
 
@@ -235,8 +242,10 @@ public class PlayerController : MonoBehaviour
         OnReset?.Invoke();
     } 
 
-    private void AddSegment()
+    IEnumerator AddSegment(float timeToWait)
     {
+        yield return new WaitForSeconds(timeToWait);
+
         Transform parent = snakeSegments[snakeSegments.Count -1];
 
         Transform newSegment = Instantiate(prefab_segment, parent.position, parent.rotation) as Transform;
